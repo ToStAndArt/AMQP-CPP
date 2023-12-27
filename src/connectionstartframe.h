@@ -204,7 +204,8 @@ public:
         if (!properties.contains("capabilities")) properties["capabilities"] = capabilities;
         
         // send back a connection start ok frame
-        connection->send(ConnectionStartOKFrame(properties, "PLAIN", connection->login().saslPlain(), "en_US"));
+        std::string mechanism = connection->login().mechanism();
+        connection->send(ConnectionStartOKFrame(properties, mechanism, connection->login().response(), "en_US"));
         
         // done
         return true;
