@@ -15,6 +15,7 @@
  *  Dependencies
  */
 #include <string>
+#include "authtype.h"
 
 /**
  *  Set up namespace
@@ -39,28 +40,77 @@ private:
      */
     std::string _password;
 
+    /**
+     *  The security mechanism
+     *  @var AuthType
+     */
+    AuthType _mechanism;
+
+    /**
+     *  The security response
+     *  @var string
+     */
+    std::string _response;
 
 public:
     /**
-     *  Default constructor
+     *  Default constructor with PLAIN authentication
      */
-    Login() : _user("guest"), _password("guest") {}
+    Login() : _user("guest"), _password("guest")
+    {
+        // Set default PLAIN mechanism and response
+        _mechanism = AuthType::plain;
+        _response = saslPlain();
+    }
 
     /**
-     *  Constructor
+     *  Constructor with PLAIN authentication mechanism
      *  @param  user
      *  @param  password
      */
     Login(std::string user, std::string password) :
-        _user(std::move(user)), _password(std::move(password)) {}
+        _user(std::move(user)), _password(std::move(password))
+    {
+        // Set default PLAIN mechanism and response
+        _mechanism = AuthType::plain;
+        _response = saslPlain();
+    }
 
     /**
-     *  Constructor
+     *  Constructor with PLAIN authentication mechanism
      *  @param  user
      *  @param  password
      */
     Login(const char *user, const char *password) :
-        _user(user), _password(password) {}
+        _user(user), _password(password)
+    {
+        // Set default PLAIN mechanism and response
+        _mechanism = AuthType::plain;
+        _response = saslPlain();
+    }
+
+    /**
+     *  Constructor with custom authentication mechanism
+     *  @param  user
+     *  @param  password
+     *  @param  mechanism
+     *  @param  response
+     */
+    Login(std::string user, std::string password, AuthType mechanism, std::string response)
+        : _user(std::move(user))
+        , _password(std::move(password))
+        , _mechanism(std::move(mechanism))
+        , _response(std::move(response)) {}
+
+    /**
+     *  Constructor with custom authentication mechanism
+     *  @param  user
+     *  @param  password
+     *  @param  mechanism
+     *  @param  response
+     */
+    Login(const char *user, const char *password, const AuthType mechanism, const char *response)
+        : _user(user), _password(password), _mechanism(mechanism), _response(response) {}
 
     /**
      *  Destructor
@@ -73,7 +123,7 @@ public:
      */
     operator bool () const
     {
-        return !_user.empty() || !_password.empty();
+        return !_user.empty() || !_password.empty() || !_response.empty();
     }
     
     /**
@@ -82,7 +132,7 @@ public:
      */
     bool operator! () const
     {
-        return _user.empty() && _password.empty();
+        return _user.empty() && _password.empty() && _response.empty();
     }
 
     /**
@@ -101,6 +151,31 @@ public:
     const std::string &password() const
     {
         return _password;
+    }
+
+    /**
+     *  Retrieve the security mechanism
+     *  @return std::string
+     */
+    const std::string mechanism() const
+    {
+        if (_mechanism == AuthType::external)
+        {
+            return "EXTERNAL";
+        }
+        else
+        {
+            return "PLAIN";
+        }
+    }
+
+    /**
+     *  String representation for security response
+     *  @return string
+     */
+    const std::string &response() const
+    {
+        return _response;
     }
 
     /**
@@ -124,7 +199,10 @@ public:
     bool operator==(const Login &that) const
     {
         // username and password must match
-        return _user == that._user && _password == that._password;
+        return _user == that._user &&
+               _password == that._password &&
+               _mechanism == that._mechanism &&
+               _response == that._response;
     }
 
     /**
@@ -149,7 +227,13 @@ public:
         if (_user != that._user) return _user < that._user;
         
         // compare passwords
-        return _password < that._password;
+        if (_password != that._password) return _password < that._password;
+
+        // compare mechanisms
+        if (_mechanism != that._mechanism) return _mechanism < that._mechanism;
+
+        // compare responses
+        return _response < that._response;
     }
 
     /**
@@ -161,7 +245,10 @@ public:
     friend std::ostream &operator<<(std::ostream &stream, const Login &login)
     {
         // write username and password
-        return stream << login._user << ":" << login._password;
+        return stream << login._user      << ":"
+                      << login._password  << ":"
+                      << login._mechanism << ":"
+                      << login._response;
     }
 
 };

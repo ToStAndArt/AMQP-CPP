@@ -64,6 +64,7 @@
 #include "amqpcpp/message.h"
 
 // mid level includes
+#include "amqpcpp/authtype.h"
 #include "amqpcpp/exchangetype.h"
 #include "amqpcpp/flags.h"
 #include "amqpcpp/callbacks.h"
